@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "NS": ["./custom-types/NetscriptDefinitions"],
+      "BB": ["./custom-types/MyTypes"]
+    },
+    "typeRoots": [
+      "./custom-types/NetscriptDefinitions",
+      "./custom-type/MyTypes"
+    ],
+    "allowJs": true,
+    "checkJs": true,
+    "lib": ["ES2019", "DOM"]
+  }
+}
