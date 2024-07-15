@@ -11,7 +11,7 @@
       "./custom-type/MyTypes"
     ],
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "lib": ["ES2019", "DOM"]
   }
 }

@@ -5,13 +5,16 @@
     "companyName": "ECorp",
     "jobType": "Software",
     "fallBackWork": "crimeWork",
-    "workUntilFactionJoin": false
+    "workUntilFactionJoin": false,
+    "focus": false
   },
   "factionWork": {
-    "factionName": "Tian Di Hui"
+    "factionName": "Tian Di Hui",
+    "focus": false
   },
   "crimeWork": {
-    "crimeName": "Shoplift"
+    "crimeName": "Shoplift",
+    "focus": false
   },
   "factionAlwaysJoin": [
     "CyberSec",

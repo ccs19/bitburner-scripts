@@ -6,7 +6,7 @@ let ns;
 /**
  * js file so it will be uploaded
  */
-const configFile = "scripts/singularity/config/config.js";
+const configFile = "/scripts/singularity/config/config.json";
 
 /**
  *

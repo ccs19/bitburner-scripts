@@ -131,15 +131,18 @@ export interface SngCompanyWork {
   jobType: string;
   fallback: SngWorkType;
   workUntilFactionJoin: boolean;
+  focus: boolean;
 }
 
 export interface SngFactionWork {
   factionName: string;
   jobType: string;
+  focus: boolean;
 }
 
 export interface SngCrimeWork {
   crimeName: string;
+  focus: boolean;
 }
 
 export interface SingularityConfig {
