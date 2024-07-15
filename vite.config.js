@@ -6,13 +6,13 @@ export default defineConfig({
   resolve: {
     alias: {
       /** path to your source code */
-      "@": resolve(__dirname, "scripts"),
-      "/scripts": resolve(__dirname, "scripts"),
+      "@": resolve(__dirname, "src"),
+      "/src": resolve(__dirname, "src"),
     },
   },
   build: { minify: false },
   /** viteburner configs */
   viteburner: {
-    watch: [{ pattern: "scripts/**/*.{js,script,txt,json}" }],
+    watch: [{ pattern: "src/**/*.{js,script,txt,json}" }],
   },
 });
