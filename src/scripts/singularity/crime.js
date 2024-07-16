@@ -2,11 +2,12 @@ import { readConfig } from "/scripts/singularity/config/sing-config";
 
 const CRIME_FILE = "/scripts/singularity/data/crime.json";
 
+let crimeNames = [];
+
 /**
  * @type {import("NS").NS} ns
  */
 let ns;
-let crimeNames = [];
 
 export async function main(_ns) {
   ns = _ns;

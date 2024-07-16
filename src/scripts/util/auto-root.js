@@ -8,7 +8,7 @@ let ownEverything = false;
 export async function main(ns) {
   while (ownEverything === false) {
     const portOpenTools = getPortOpenTools(ns);
-    const { rootCandidates, cantRootYet } = await findRootCandidates(
+    const { rootCandidates, cantRootYet } = findRootCandidates(
       ns,
       portOpenTools
     );
@@ -28,7 +28,7 @@ export async function main(ns) {
   ns.tprint("Rooted all servers!");
 }
 
-async function findRootCandidates(ns, portOpenTools) {
+function findRootCandidates(ns, portOpenTools) {
   let servers = readServers(ns, false);
   let rootCandidates = [];
   let cantRootYet = [];

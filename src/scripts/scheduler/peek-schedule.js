@@ -7,9 +7,28 @@ const JOB_FILE = "/scripts/scheduler/data/peek-jobs.json";
  * @param {import("NS").NS} ns
  */
 export async function main(ns) {
+  let prune = false;
+  if (ns.args.indexOf("prune") > -1) {
+    prune = true;
+  }
   let runningJobOutput = ns.getPortHandle(SCHEDULE_OUT_PORT);
   let completionOutput = ns.getPortHandle(TASK_COMPLETE_PORT);
-
+  if (prune) {
+    let runningPruned = 0;
+    let completedPruned = 0;
+    while (runningJobOutput.peek() !== "NULL PORT DATA") {
+      runningJobOutput.read();
+      runningPruned++;
+    }
+    while (completionOutput.peek() !== "NULL PORT DATA") {
+      completionOutput.read();
+      completedPruned++;
+    }
+    ns.tprint(
+      `Pruned ${runningPruned} running jobs and ${completedPruned} completed jobs.`
+    );
+    return;
+  }
   let jobs = runningJobOutput.peek();
   let completed = completionOutput.peek();
   jobs = jobs === "NULL PORT DATA" ? null : jobs;

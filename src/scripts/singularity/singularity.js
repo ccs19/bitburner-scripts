@@ -20,6 +20,9 @@ let factionWorkPid = 0;
  **/
 export async function main(_ns) {
   ns = _ns;
+  jobPid = findJobPid();
+  crimePid = findCrimePid();
+  factionWorkPid = findFactionWorkPid();
   while (true) {
     const config = readConfig(ns);
     doBackdoor();
@@ -53,14 +56,14 @@ async function doBackdoor() {
 }
 
 function doJob() {
-  if (!jobPid) {
+  if (jobPid <= 0) {
     killPid(crimePid);
     killPid(factionWorkPid);
     jobPid = ns.exec(JOB_SCRIPT, ns.getHostname());
     if (jobPid === 0) {
-      ns.tprint("Failed to start job");
+      ns.tprintf("Failed to start job");
     } else {
-      ns.tprint(`Doing job.`);
+      ns.tprintf(`Started job script.`);
     }
   }
 }
@@ -93,4 +96,24 @@ function killPid(pid) {
     ns.kill(pid);
     pid = 0;
   }
+}
+
+function findJobPid() {
+  return findProcessPid(JOB_SCRIPT);
+}
+
+function findCrimePid() {
+  return findProcessPid(CRIME_SCRIPT);
+}
+
+function findFactionWorkPid() {
+  return findProcessPid(FACTION_WORK_SCRIPT);
+}
+
+function findProcessPid(script) {
+  const processes = ns.ps(ns.getHostname());
+  const process = processes.find((p) => {
+    return p.filename === script || p.filename === script.substring(1);
+  });
+  return process ? process.pid : 0;
 }
