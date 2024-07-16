@@ -1,4 +1,3 @@
-import { backdoor } from "scripts/singularity/backdoor";
 import { readConfig } from "scripts/singularity/config/sing-config";
 const BACKDOOR_SCRIPT = "scripts/singularity/backdoor.js";
 const JOB_SCRIPT = "/scripts/singularity/job.js";
@@ -25,7 +24,6 @@ export async function main(_ns) {
   factionWorkPid = findFactionWorkPid();
   while (true) {
     const config = readConfig(ns);
-    doBackdoor();
     handleWorkType(config);
     await ns.sleep(10000);
   }
@@ -49,10 +47,6 @@ function handleWorkType(config) {
   } else {
     killAllWork();
   }
-}
-
-async function doBackdoor() {
-  //backdoorTargets = await backdoor(ns, backdoorTargets);
 }
 
 function doJob() {
@@ -82,7 +76,16 @@ function doCrime() {
 }
 
 function doFactionWork() {
-  //ns.exec(FACTION_WORK_SCRIPT, ns.getHostname());
+  if (!factionWorkPid) {
+    killPid(jobPid);
+    killPid(crimePid);
+    factionWorkPid = ns.exec(FACTION_WORK_SCRIPT, ns.getHostname());
+    if (factionWorkPid === 0) {
+      ns.tprint("Failed to start faction work");
+    } else {
+      ns.tprint(`Working for faction.`);
+    }
+  }
 }
 
 function killAllWork() {

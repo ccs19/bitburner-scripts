@@ -1,5 +1,5 @@
 {
-  "currentWorkType": "companyWork",
+  "currentWorkType": "factionWork",
   "workTypes": ["companyWork", "factionWork", "crimeWork"],
   "companyWork": {
     "companyName": "ECorp",
@@ -9,7 +9,8 @@
     "focus": false
   },
   "factionWork": {
-    "factionName": "Tian Di Hui",
+    "factionName": "Daedalus",
+    "jobType": "hacking",
     "focus": false
   },
   "crimeWork": {
