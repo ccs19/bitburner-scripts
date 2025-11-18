@@ -5,6 +5,7 @@ let ns;
 
 /**
  * js file so it will be uploaded
+ * ??? What does this comment mean ???
  */
 const configFile = "/scripts/singularity/config/config.json";
 

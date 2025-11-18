@@ -2,6 +2,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": ".",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "esnext",
+    "inlineSourceMap": true,
+    "rootDir": "./src",
     "paths": {
       "NS": ["./custom-types/NetscriptDefinitions"],
       "BB": ["./custom-types/MyTypes"]

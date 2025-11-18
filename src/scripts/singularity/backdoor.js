@@ -1,5 +1,5 @@
-import { getConnectPath } from "scripts/util/t-connect";
-import { readConfig } from "scripts/singularity/config/sing-config";
+import { getConnectPath } from "/scripts/util/t-connect";
+import { readConfig } from "/scripts/singularity/config/sing-config";
 
 /**
  * @type {import("NS").NS} ns

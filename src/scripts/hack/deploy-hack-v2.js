@@ -1,10 +1,10 @@
-import { readServers } from "scripts/util/common";
+import { readServers } from "/scripts/util/common";
 
 import {
   readScheduleTaskByOwner,
   getId,
   scheduleTaskBatch,
-} from "scripts/scheduler/schedule-service";
+} from "/scripts/scheduler/schedule-service";
 
 const GROW_SCRIPT = "/scripts/hack/do-grow.js";
 const WEAKEN_SCRIPT = "/scripts/hack/do-weaken.js";

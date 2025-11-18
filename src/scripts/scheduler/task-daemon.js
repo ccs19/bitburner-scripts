@@ -1,3 +1,5 @@
+import { isBlank } from "../util/string-util.js";
+
 let outPort = 0;
 let completePort = 0;
 /**
@@ -11,11 +13,15 @@ let completionHandle;
 
 /**
  * If a task has not been updated in this amount of time, it is checked for orphaned status.
- * If it is not currently running, it is marked as failed.
+ * Tasks are never marked as orphaned if they are in PENDING status.
  * @type {number}
  */
-const ORPHANED_TIMEOUT = 60 * 90; // 90 minutes
+const ORPHANED_TIMEOUT_SECS = 60 * 90; // 90 minutes
 
+/** 
+ * Time to sleep between checks of running jobs.
+ * @type {number}
+ */
 const SLEEP = 1000 * 5; // 5 seconds
 
 /**
@@ -26,11 +32,20 @@ const SLEEP = 1000 * 5; // 5 seconds
  */
 export async function main(ns) {
   initHandle(ns);
-  clearQueues(ns);
   /**
    * @type {import("BB").RunningJobs}
    */
+  // TODO what does this do?
+  // Should be a function so it's clear.
+  await monitorRunningJobs(ns);
+}
 
+/**
+ * Start the monitoring loop. This checks running jobs for completion.
+ *  
+ * @param {import("NS").NS} ns
+ */
+async function monitorRunningJobs(ns) {
   while (true) {
     let runningJobs = runningJobsHandle.peek() || {};
     const keys = Object.keys(runningJobs);
@@ -53,6 +68,8 @@ export async function main(ns) {
 }
 
 /**
+ * Checks a task for completion or orphaned status.
+ * If 
  * @param {import("NS").NS} ns
  * @param {import("BB").ScheduledTask} task
  * @param {string} jobId
@@ -68,11 +85,13 @@ function checkTask(ns, task, jobId, completions) {
 }
 
 /**
+ * Checks a task for completion. This is done by fetching all processes
+ * on the host and checking if the task's PID exists. If it doesn't, we assume the task completed successfully.
  * @param {import("NS").NS} ns
- * @param {import("BB").ScheduledTask} task
- * @param {string} jobId
- * @param {import("BB").TaskCompletion[]} completions
- * @returns boolean true if handled
+ * @param {import("BB").ScheduledTask} task Task to check
+ * @param {string} jobId The parent job ID
+ * @param {import("BB").TaskCompletion[]} completions If task is completed, it is added to this array
+ * @returns boolean true if handled 
  */
 function checkCompleted(ns, task, jobId, completions) {
   if (task.status !== "RUNNING") {
@@ -85,7 +104,7 @@ function checkCompleted(ns, task, jobId, completions) {
     ns.tprintf(`Error getting processes on ${task.runningHost}: ${e}`);
   }
   if (
-    processes.length === 0 ||
+    // If the task's process is not found on the host, it has completed
     !processes.filter((p) => p.pid === task.pid).length
   ) {
     completions.push(markCompleted(task, jobId));
@@ -95,11 +114,12 @@ function checkCompleted(ns, task, jobId, completions) {
 }
 
 /**
+ * Return true if a task is orphaned. An orphaned task is one that has not been
+ * updated in ORPHANED_TIMEOUT_SECS and is not in a PENDING state.
  * @param {import("NS").NS} ns
  * @param {import("BB").ScheduledTask} task
  * @param {string} jobId
-   * @param {import("BB").TaskCompletion[]} completions
-
+ * @param {import("BB").TaskCompletion[]} completions
  * @returns boolean true if handled
  */
 function checkOrphaned(ns, task, jobId, completions) {
@@ -107,7 +127,7 @@ function checkOrphaned(ns, task, jobId, completions) {
     return false;
   }
   const now = getSecSinceEpoch(new Date());
-  if (now - getSecSinceEpoch(task.startTime) > ORPHANED_TIMEOUT) {
+  if (now - getSecSinceEpoch(task.startTime) > ORPHANED_TIMEOUT_SECS) {
     ns.tprintf(`Task ${task.pid} on ${task.runningHost} has timed out.`);
     completions.push(markCompleted(task, jobId, "FAILED"));
     return true;
@@ -116,7 +136,7 @@ function checkOrphaned(ns, task, jobId, completions) {
 }
 
 /**
- *
+ * Updates a task to completed status.
  * @param {import("BB").ScheduledTask} task
  * @param {string} jobId
  * @param {string} completionType
@@ -140,7 +160,7 @@ function markCompleted(
 }
 
 /**
- *
+ * Notifies the system of completed tasks. These are written to the completion port.
  * @param {import("NS").NS} ns
  * @param {import("BB").TaskCompletion[]} completions
  */
@@ -149,13 +169,14 @@ function notifyCompletions(ns, completions) {
 }
 
 /**
- *
+ * Initiatlizes the running job and completion port handles.
  * @param {import("NS").NS} ns
  */
 function initHandle(ns) {
   const portArg = ns.args[0];
   const completionPortArg = ns.args[1];
-  if (portArg === undefined || completionPortArg === undefined) {
+  if (isBlank(portArg) || isBlank(completionPortArg)) {
+    ns.tprintf("Port not provided for task-daemon.js" + portArg + " "  +completionPortArg);
     throw new Error("Port not provided for task-daemon.js");
   }
   const port = Number(portArg.valueOf());
@@ -176,7 +197,7 @@ function initHandle(ns) {
 }
 
 /**
- *
+ * Returns the number of seconds since epoch for the given date.
  * @param {Date} date
  * @returns {number}
  */
@@ -187,8 +208,3 @@ function getSecSinceEpoch(date) {
   return Math.round(date.getTime() / 1000);
 }
 
-/**
- *
- * @param {import("NS").NS} ns
- */
-function clearQueues(ns) {}

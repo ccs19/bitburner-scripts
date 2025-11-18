@@ -1,4 +1,4 @@
-import { readServers } from "scripts/scheduler/scheduler-util";
+import { readServers } from "/scripts/scheduler/scheduler-util";
 
 const TASK_DAEMON = "/scripts/scheduler/task-daemon.js";
 
@@ -41,6 +41,7 @@ let runningJobOutput;
 let completionOutput;
 
 /**
+ * Start the scheduler service. If the service was restarted, all 
  * @param {import("NS").NS} ns
  */
 export async function main(ns) {
@@ -52,17 +53,19 @@ export async function main(ns) {
   completionOutput.clear();
   //checkDebug(ns);
 
-  ns.exec(
-    TASK_DAEMON,
-    ns.getHostname(),
-    {
-      threads: 1,
-      preventDuplicates: true,
-    },
-    SCHEDULE_OUT_PORT,
-    TASK_COMPLETE_PORT,
-    true
-  );
+  initializeTaskDaemon(ns);
+  // Ah... the intention of this was that if the scheduler is restarted,
+  // it could pick up where it left off.
+  // Currently, it looks like it just clears everything out, which should be fine.
+  // The scheduler takes into account available memory for each server, so 
+  // any tasks currently running would just continue to run until they complete.
+  //   
+  //
+  // Unclear if this works or not.
+  // Should in theory be pretty easy to support, but would need a mechanism to 
+  // lock the file on writes. Also
+  // Also, need to ensure that only one instance of the scheduler is allowed.
+  // I think there's already something in place for that, though.
   //readPersistedTasks(ns);
   ns.disableLog("scan");
   ns.disableLog("sleep");
@@ -82,8 +85,29 @@ export async function main(ns) {
   }
 }
 
+/** 
+ * Initialize the task daemon if it is not already running.
+ * The task daemon is responsible for monitoring running tasks and reporting
+ * their completion status back to the scheduler.
+ * See: task-daemon.js
+ * @param {import("NS").NS} ns
+ */
+function initializeTaskDaemon(ns) {
+  ns.exec(
+    TASK_DAEMON,
+    ns.getHostname(),
+    {
+      threads: 1,
+      preventDuplicates: true,
+    },
+    SCHEDULE_OUT_PORT,
+    TASK_COMPLETE_PORT,
+    true
+  );
+}
+
 /**
- * Read the completion output port and mark tasks as completed or orphaned and prunes
+ * Read the completion output port and mark tasks as completed or orphaned. Prunes
  * tasks that are no longer running.
  * @param {import("NS").NS} ns
  */
@@ -118,6 +142,14 @@ function markCompletions(ns) {
   } while (true);
 }
 
+/**
+ * Remove a task from a job's task list. If no tasks remain in the parent job,
+ * the job is removed from RUNNING_JOBS.
+ * @param {import("BB").ScheduledTask[]} jobTasks The list of tasks in the job
+ * @param {number} pid The pid of the task to remove
+ * @param {string} jobId The id of the parent job
+ * @returns {import("BB").ScheduledTask[]} The remaining tasks in the job
+ */
 function handlePruneTask(jobTasks, pid, jobId) {
   jobTasks = jobTasks.filter((t) => t.pid !== pid);
   if (jobTasks.length === 0) {
@@ -128,6 +160,9 @@ function handlePruneTask(jobTasks, pid, jobId) {
   return jobTasks;
 }
 
+/**
+ * Mark a job as completed if all child tasks are completed. 
+ */
 function handleCompletedTask(task, job, endTime) {
   if (allTasksCompleted(job)) {
     job.endTime = endTime;
@@ -135,6 +170,14 @@ function handleCompletedTask(task, job, endTime) {
   }
 }
 
+/**
+ * Handle an orphaned task. If all tasks in the parent job are orphaned, mark the job as failed.
+ * If all tasks are completed or orphaned, mark the job as completed.
+ *
+ * @param {import("BB").ScheduledTask} task
+ * @param {import("BB").RunningJob} job
+ * @param {Date} endTime
+ */
 function handleOrphanedTask(task, job, endTime) {
   if (job.tasks.every((t) => t.status === "ORPHANED")) {
     job.endTime = endTime;
@@ -146,6 +189,7 @@ function handleOrphanedTask(task, job, endTime) {
 }
 
 /**
+ * Return true if all tasks in the job are completed or orphaned.
  *
  * @param {import("BB").RunningJob} job
  * @returns
@@ -159,6 +203,11 @@ function allTasksCompleted(job) {
   );
 }
 
+/**
+ * Prune any jobs that have been completed for longer than COMPLETED_TIMEOUT.
+ * "Completed" is any job with status COMPLETED or FAILED.
+ * @param {import("NS").NS} ns
+ */
 function pruneFinishedJobs(ns) {
   const keys = Object.keys(RUNNING_JOBS);
   const now = getSecSinceEpoch(new Date());
@@ -210,6 +259,7 @@ function doSchedule(ns, request) {
   RUNNING_JOBS[request.id] = runningJob;
 }
 /**
+ * TODO Refactor. Lot of complexity here.
  * @param {import("NS").NS} ns
  */
 function executeTasks(ns) {
@@ -217,12 +267,7 @@ function executeTasks(ns) {
   for (const key of keys) {
     const servers = readServers(ns);
     const job = RUNNING_JOBS[key];
-    if (
-      job.endTime ||
-      job.remainingThreads <= 0 ||
-      job.status === "COMPLETED" ||
-      job.status === "FAILED"
-    ) {
+    if (isJobCompletelyHandled(job)) {
       continue;
     }
     const { startTime, type, script, args, estimatedRunTime, sourceHost } = job;
@@ -239,17 +284,6 @@ function executeTasks(ns) {
     const estimatedEndTimeMs = estimatedRunTime
       ? taskStartTime + estimatedRunTime
       : null;
-    const taskTemplate = () => {
-      return {
-        sourceHost,
-        script,
-        type,
-        args,
-        startTime,
-        status: "RUNNING",
-        estimatedEndTime: new Date(estimatedEndTimeMs),
-      };
-    };
 
     for (const s of servers) {
       if (job.remainingThreads <= 0) {
@@ -262,37 +296,53 @@ function executeTasks(ns) {
       const availableRam = maxRam - ns.getServer(s.hostname).ramUsed;
       const totalScriptCost = job.remainingThreads * scriptCost;
       let task;
+      let threadsForThisServer = 0;
       if (availableRam < scriptCost) {
         continue;
       } else if (availableRam >= totalScriptCost) {
-        task = buildTask({
-          ...taskTemplate(),
-          threads: job.remainingThreads,
-          runningHost: s.hostname,
-          ramUsage: totalScriptCost,
-        });
-        startTask(ns, task, key, job);
+        // Machine can handle all threads
+        threadsForThisServer = job.remainingThreads;
       } else if (availableRam > scriptCost) {
+        // Machine may be able to handle at least some threads
         const threads = Math.floor(availableRam / scriptCost);
         if (threads < 1) {
+          // Cannot run one thread, check next server
           continue;
         }
-
+        threadsForThisServer = threads;
+      }
+      if (threadsForThisServer > 0) {
         task = buildTask({
-          ...taskTemplate(),
-          threads: threads,
+          ...taskTemplate(job, estimatedEndTimeMs),
+          threads: threadsForThisServer,
           runningHost: s.hostname,
-          ramUsage: scriptCost * threads,
+          ramUsage: scriptCost * threadsForThisServer,
         });
         startTask(ns, task, key, job);
-        job.lastUpdated = new Date();
-        job.status = "RUNNING";
       }
     }
   }
 }
 
+/** 
+ * Return a task template with default values.
+ * @param {import("BB").RunningJob} job The parent job
+ * @returns {import("BB").ScheduledTask} A task
+ */
+function taskTemplate(job, estimatedEndTimeMs) {
+  return {
+    sourceHost: job.sourceHost,
+    script: job.script,
+    type: job.type,
+    args: job.args,
+    startTime: job.startTime,
+    status: "RUNNING",
+    estimatedEndTime: new Date(estimatedEndTimeMs),
+  }
+}
+
 /**
+ * Start a task on the specified host.
  * @param {import("NS").NS} ns
  * @param {import("BB").ScheduledTask} task
  * @param {string} id
@@ -326,11 +376,14 @@ function startTask(ns, task, id, job) {
   }
   job.tasks = job.tasks.concat(successfulTasks);
   job.status = "RUNNING";
-  job.startTime = new Date();
+  job.startTime = job.startTime ? job.startTime : new Date();
+  job.lastUpdated = new Date();
   job.remainingThreads -= threads;
 }
 
 /**
+ * Read persisted tasks from file.
+ * Is this needed? Commented out reference to it exists in main(). What would be the use case?
  * @param {import("NS").NS} ns
  */
 function readPersistedTasks(ns) {
@@ -343,6 +396,7 @@ function readPersistedTasks(ns) {
 }
 
 /**
+ * Build a scheduled task.
  * @returns {import("BB").ScheduledTask}
  */
 function buildTask({
@@ -388,6 +442,7 @@ function checkDebug(ns, handles) {
 
 /**
  * If processes were loaded from file, date may be a string.
+ * This function ensures that the date is returned as a Date object.
  * @param {any} date
  * @returns {Date}
  */
@@ -416,3 +471,13 @@ function getDate(date) {
 function getSecSinceEpoch(date) {
   return Math.round(date.getTime() / 1000);
 }
+
+function isJobCompletelyHandled(job) {
+  return job.endTime ||
+    job.remainingThreads <= 0 ||
+    job.status === "COMPLETED" ||
+    job.status === "FAILED";
+}
+
+
+

@@ -1,4 +1,4 @@
-import { readServers, millisToMinutesAndSeconds } from "scripts/util/common";
+import { readServers, millisToMinutesAndSeconds } from "/scripts/util/common";
 
 let NS = null;
 

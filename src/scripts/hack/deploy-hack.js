@@ -3,7 +3,7 @@ import {
   readServers,
   pidIsRunning,
   readBotServers,
-} from "scripts/util/common";
+} from "/scripts/util/common";
 
 const GROW_SCRIPT = "/scripts/hack/do-grow.js";
 const WEAKEN_SCRIPT = "/scripts/hack/do-weaken.js";

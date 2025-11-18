@@ -4,6 +4,7 @@ const TASK_COMPLETE_PORT = 8;
 const JOB_FILE = "/scripts/scheduler/data/peek-jobs.json";
 
 /**
+ * Peek at the current scheduled/completed jobs.
  * @param {import("NS").NS} ns
  */
 export async function main(ns) {

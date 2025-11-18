@@ -1,4 +1,4 @@
-import { readServers } from "scripts/util/common";
+import { readServers } from "/scripts/util/common";
 
 /**
  * @param {import("NS").NS} ns

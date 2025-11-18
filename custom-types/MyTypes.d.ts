@@ -154,3 +154,111 @@ export interface SingularityConfig {
   destroyBitNode: boolean;
   backdoorTargets: string[];
 }
+
+export interface AugmentDefinition {
+ [key: string]: AugmentDetail;
+}
+
+export interface AugmentDetail {
+  /** Rep cost to purchase augment */
+  repCost: number;
+  /** Money cost to purchase augment */
+  moneyCost: number;
+  /**
+   * Company reputation increase
+   */
+  company_rep: number;
+  /** Faction reputation increase */
+  faction_rep: number;
+  /** Factions associated with the augment */
+  factions: string[] | string;
+  /** Hacking speed increase*/
+  hacking_speed: number;
+  /** Hacking money increase */
+  hacking_money: number;
+  /** Hacking skill increase */
+  hacking: number;
+  /** Hacking chance increase */
+  hacking_chance: number;
+  /** Hacking experience increase */
+  hacking_exp: number;
+  /** Description of the augment */
+  stats: string;
+  /** ??? */
+  isSpecial: boolean;
+  /**
+   * Strength increase
+   */
+  strength: number;
+  /** 
+   * Defense increase
+   */
+  defense: number;
+  /** 
+   * Dexterity increase
+   */
+  dexterity: number;
+  /** 
+   * Agility increase
+   */
+  agility: number;
+  /** 
+   * Charisma increase
+   */
+  charisma: number;
+  /** 
+   * Strength experience increase
+   */
+  strength_exp: number;
+  /** 
+   * Defense experience increase
+   */
+  defense_exp: number;
+  /** 
+   * Dexterity experience increase
+   */
+  dexterity_exp: number;
+  /** 
+   * Agility experience increase
+   */
+  agility_exp: number;
+  /** 
+   * Charisma experience increase
+   */
+  charisma_exp: number;
+  /** 
+   * Hack grow increase
+   */
+  hacking_grow: number;
+  /** Crime money increase */
+  crime_money: number;
+  /** Crime success rate increase */
+  crime_success: number;
+  /** Work money increase */
+  work_money: number;
+  /** Hacknet node money increase */
+  hacknet_node_money: number;
+  /** Hacknet node purchase cost decrease */
+  hacknet_node_ram_cost: number;
+  /** Hacknet node purchase cost decrease */
+  hacknet_node_core_cost: number;
+  /** Hacknet node purchase cost decrease */
+  hacknet_node_level_cost: number;
+  bladeburner_max_stamina: number;
+  bladeburner_stamina_gain: number;
+  bladeburner_analysis: number;
+  bladeburner_success_chance: number;
+  /** Increase starting money */
+  startingMoney: number;
+  /** Pre-requisites for the augment */
+  prereqs: string | string[];
+  /** Programs granted by the augment */
+  programs: string[];
+}
+
+export type PurchaseableAugment = {
+  factions: string[];
+  name: string;
+  price: number;
+  repRequirement: number;
+}

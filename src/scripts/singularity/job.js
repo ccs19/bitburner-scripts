@@ -1,4 +1,4 @@
-import { readConfig } from "scripts/singularity/config/sing-config";
+import { readConfig } from "/scripts/singularity/config/sing-config";
 
 const JOBS_BY_TYPE = {
   Software: [

@@ -1,5 +1,5 @@
-import { readConfig } from "scripts/singularity/config/sing-config";
-const BACKDOOR_SCRIPT = "scripts/singularity/backdoor.js";
+import { readConfig } from "/scripts/singularity/config/sing-config";
+const BACKDOOR_SCRIPT = "/scripts/singularity/backdoor.js";
 const JOB_SCRIPT = "/scripts/singularity/job.js";
 const CRIME_SCRIPT = "/scripts/singularity/crime.js";
 const FACTION_WORK_SCRIPT = "/scripts/singularity/faction.js";

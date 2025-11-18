@@ -2,7 +2,7 @@ import {
   scheduleTask,
   readScheduleTask,
   readScheduleTaskByOwner,
-} from "scripts/scheduler/schedule-service";
+} from "/scripts/scheduler/schedule-service";
 
 const OWNER = "grind-levels";
 const THREADS = 10000000;

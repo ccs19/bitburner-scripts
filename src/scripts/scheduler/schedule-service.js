@@ -22,24 +22,19 @@ export async function scheduleTask(ns, request) {
 }
 
 /**
- * Schedule multiple tasks at once.
+ * Schedule multiple tasks at once. See scheduleTask.
  * @param {import("NS").NS} ns
  * @param {import("BB").ScheduleTaskRequest[]} tasks
  * @returns {Promise<import("BB").ScheduleTaskRequest[]>} The tasks that were scheduled with an ID assigned.
  */
 export async function scheduleTaskBatch(ns, tasks) {
+  // Get a handle to the input port
   const portHandle = ns.getPortHandle(SCHEDULE_IN_PORT);
   const toSchedule = [];
   for (const task of tasks) {
-    const { script, threads, type, args, attributes, owner } = task;
+    validateTask(ns, task);
     task.id = task.id || getId();
     task.sourceHost = ns.getHostname();
-    if (script === undefined || script === null || script === "") {
-      throw new Error("script is required for scheduler");
-    }
-    if (!ns) {
-      throw new Error("ns is required for scheduler");
-    }
     toSchedule.push(task);
   }
   if (toSchedule.length === 0) {
@@ -52,6 +47,15 @@ export async function scheduleTaskBatch(ns, tasks) {
   }
   ns.writePort(SCHEDULE_IN_PORT, toSchedule);
   return toSchedule;
+}
+
+function validateTask(ns, task) {
+  if (task.script === undefined || task.script === null || task.script === "") {
+    throw new Error("script is required for scheduler");
+  }
+  if (!ns) {
+    throw new Error("ns is required for scheduler");
+  }
 }
 
 /**
@@ -71,7 +75,7 @@ export function readScheduleTask(ns, id) {
 }
 
 /**
- *
+ * Convert a RunningJob to a ScheduleResponse
  * @param {import("BB").RunningJob} job
  * @param {string} id
  * @returns
@@ -91,7 +95,7 @@ function buildScheduleResponse(job, id) {
 }
 
 /**
- *
+ * Read scheduled tasks by owner. An owner is the entity that requested the task.
  * @param {import("NS").NS} ns
  * @param {string} owner
  */
@@ -111,6 +115,7 @@ export function readScheduleTaskByOwner(ns, owner) {
 }
 
 /**
+ * Read the current running jobs from the scheduler.
  * @param {import("NS").NS} ns
  * @param {boolean} invalidate Invalidate cached data
  * @returns {import("BB").RunningJobs | null}
@@ -129,13 +134,15 @@ function readRunningJobs(ns, invalidate = false) {
 }
 
 /**
- * Return a random ID within the range of 0 to 10000000.
+ * Return a random ID for a task.
  * May be used to generate unique ids for tasks if needed (e.g. when queuing batches of tasks). If not,
  * the scheduler will generate an id for you.
  * @returns {string} A unique id
  */
 export function getId() {
-  return String(Math.floor(Math.random() * ID_RANGE[1]) + ID_RANGE[0]);
+  return crypto
+    .getRandomValues(new Uint32Array(2))
+    .reduce((acc, val) => acc + val.toString(16).padStart(8, "0"), "");
 }
 function isExpired() {
   if (

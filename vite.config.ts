@@ -8,11 +8,17 @@ export default defineConfig({
       /** path to your source code */
       "@": resolve(__dirname, "src"),
       "/src": resolve(__dirname, "src"),
+      '/scripts': resolve(__dirname, 'src/scripts')
     },
   },
   build: { minify: false },
   /** viteburner configs */
   viteburner: {
-    watch: [{ pattern: "src/**/*.{js,script,txt,json}" }],
+    watch: [
+      {
+        pattern: 'src/**/*.{js,ts}',
+        transform: true,
+      },
+      { pattern: "src/**/*.{script,txt,json}" }],
   },
 });

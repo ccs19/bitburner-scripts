@@ -1,4 +1,4 @@
-import { readConfig } from "scripts/singularity/config/sing-config";
+import { readConfig } from "/scripts/singularity/config/sing-config";
 
 /**
  * @type {import("NS").NS} ns

@@ -30,12 +30,12 @@ export async function main(_ns) {
 
 function buyUpgrades() {
   let upgradesRemaining = false;
-  upgradesRemaining = buyTorRouter();
-  upgradesRemaining = buyPrograms();
+  upgradesRemaining = await buyTorRouter();
+  upgradesRemaining = await buyPrograms();
   return upgradesRemaining;
 }
 
-function buyTorRouter() {
+async function buyTorRouter() {
   if (ns.hasTorRouter()) {
     return false;
   }
@@ -45,7 +45,7 @@ function buyTorRouter() {
   }
 }
 
-function buyPrograms() {
+async function buyPrograms() {
   if (!ns.hasTorRouter()) {
     return true;
   }

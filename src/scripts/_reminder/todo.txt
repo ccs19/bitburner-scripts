@@ -1,0 +1,13 @@
+Reminder when you come back to play this game a year from now.
+
+1. View the readme. It's incomplete, but is a starting point. 
+
+Last thing(s) you were working on:
+* Relearn how to play the game.
+* Scheduler seems fine. Code's surprisingly not as messy as I expected it to be. 
+* Singularity -- Looks like this allows automation of jobs/factions/aug purchasing   
+* Get automatic jobs working. Some obvious undefined check not being performed
+* Build a script to figure out augments/cost
+* TOP get automatic augment working. After over a year, there's a ton of money to spend and I ain't clicking that stupid button 8 billion times 
+* Document your shit. No clue what any of this stuff does. I was an idiot. This will re-familiarize you with the game.
+* Migrate to TS? LOT of work. Probably not gonna happen, but new stuff should try to be TS.

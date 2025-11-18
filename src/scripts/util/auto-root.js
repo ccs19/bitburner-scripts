@@ -1,4 +1,4 @@
-import { readServers, getPortOpenTools } from "scripts/util/common";
+import { readServers, getPortOpenTools } from "/scripts/util/common";
 
 let ownEverything = false;
 
