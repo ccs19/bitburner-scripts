@@ -36,7 +36,7 @@ function buyUpgrades() {
 }
 
 async function buyTorRouter() {
-  if (ns.hasTorRouter()) {
+  if (await ns.hasTorRouter()) {
     return false;
   }
   if (ns.singularity.purchaseTor()) {
